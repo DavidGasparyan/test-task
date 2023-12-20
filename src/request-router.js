@@ -58,7 +58,6 @@ const getRequestByHttpMethod = function(method, url, payload) {
 
 const filterRequestsByRequestProtocol = function(destinationConfig, payload) {
   const { transport, url, name } = destinationConfig
-  console.log(destinationConfig);
   const [ protocol, method ] = transport.split('.');
   
   if (protocol === 'http') {
@@ -79,8 +78,7 @@ const filterRequestsByRequestProtocol = function(destinationConfig, payload) {
 const routeRequestsToDestinations = async function({ possibleDestinations, payload, strategy }) {
   const requests = {
     http: {},
-    console: {
-    },
+    console: {},
   };
   
   possibleDestinations.forEach((destinationObj) => {
@@ -101,9 +99,13 @@ const routeRequestsToDestinations = async function({ possibleDestinations, paylo
       }
     });
   
-  const filteredRequests = Object.values(requests['http']);
+  const httpRequests = Object.values(requests['http']);
   
-  await Promise.allSettled(filteredRequests);
+  await Promise.allSettled(httpRequests);
+  
+  for (let fn in requests.console) {
+    requests.console[fn]();
+  }
 }
 
 const requestRouter = async (req, res, next) => {
