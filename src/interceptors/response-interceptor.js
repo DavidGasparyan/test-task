@@ -26,6 +26,7 @@ const responseInterceptor = (req, res, next) => {
     
     return originalSend.call(this, body);
   };
+  
   next();
 };
 
