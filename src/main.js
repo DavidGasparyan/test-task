@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express';
 import bodyParser from 'body-parser';
 import requestRouter from "./request-router.js";
@@ -5,7 +6,6 @@ import responseInterceptor from "./interceptors/response-interceptor.js";
 
 const app = express();
 const port = 3000;
-const router = express.Router();
 
 app.use(bodyParser.json());
 app.use(

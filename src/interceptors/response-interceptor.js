@@ -11,7 +11,7 @@ const responseInterceptor = (req, res, next) => {
     if (!responseSent) {
       if (res.statusCode < 400) {
         httpLoggerDB.info(
-          'Some Success message',
+          body.message,
           formatHTTPLoggerResponse(req, res, body, requestStartTime)
         );
       } else {

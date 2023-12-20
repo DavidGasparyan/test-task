@@ -8,7 +8,7 @@ export const httpLoggerDB = winston.createLogger({
   ),
   transports: [
     new winston.transports.MongoDB({
-      db: 'mongodb://mongo:mongo@localhost:27017',
+      db: process.env.MONGO_URI,
       collection: 'logs',
       options: { useUnifiedTopology: true }
     }),

@@ -12,17 +12,17 @@ services:
     volumes:
       - mongodb-data:/data/db
 
-#  express-app:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    container_name: express-app
-#    ports:
-#      - "3000:3000"
-#    depends_on:
-#      - mongodb
-#    environment:
-#      MONGO_URI: mongodb://yourUsername:yourPassword@mongodb:27017/y
+  express-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: express-app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: mongodb://mongo:mongo@mongodb:27017
 
 volumes:
   mongodb-data:
