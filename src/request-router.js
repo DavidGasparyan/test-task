@@ -70,7 +70,7 @@ const filterRequestsByRequestProtocol = function(destinationConfig, payload) {
   if (protocol === 'console') {
     return {
       protocol: 'console',
-      method: console[method](name, payload),
+      method: () => console[method](name, payload),
     }
   }
 }
@@ -81,17 +81,22 @@ const routeRequestsToDestinations = async function({ possibleDestinations, paylo
     console: {},
   };
   
+  const allDestinations = {
+  
+  };
+  
   possibleDestinations.forEach((destinationObj) => {
       const isRoutingToDestinationPermitted = checkStrategy(strategy, destinationObj)
       
       for (const destination in destinationObj) {
+        allDestinations[destination] = false;
+        
         if (isRoutingToDestinationPermitted) {
           const destinationConfig = DESTINATIONS.find(dest => dest.name === destination);
           
           if (destinationConfig) {
             const { protocol, method } = filterRequestsByRequestProtocol(destinationConfig, payload);
-            
-            requests[protocol] = method;
+            requests[protocol][destination] = method;
           } else {
             console.error('UnknownDestinationError', destination);
           }
@@ -103,16 +108,22 @@ const routeRequestsToDestinations = async function({ possibleDestinations, paylo
   
   await Promise.allSettled(httpRequests);
   
-  for (let fn in requests.console) {
-    requests.console[fn]();
+  for (let fn in requests['console']) {
+    requests['console'][fn]();
+  }
+  
+  return {
+    ...allDestinations,
+    ...(Object.keys(requests['http']).reduce((a, v) => ({ ...a, [v]: true}), {})),
+    ...(Object.keys(requests['console']).reduce((a, v) => ({ ...a, [v]: true}), {})),
   }
 }
 
 const requestRouter = async (req, res, next) => {
   try {
     const { possibleDestinations, payload, strategy = 'ALL'} = req.body;
-    await routeRequestsToDestinations({ possibleDestinations, payload, strategy });
-    res.send('processed');
+    const response = await routeRequestsToDestinations({ possibleDestinations, payload, strategy });
+    res.send(response);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response && error.response.status === 404) {
       res.status(404).send('Not Found');
