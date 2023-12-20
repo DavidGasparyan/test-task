@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import requestRouter from "./request-router.js";
-import axios from "axios";
+import responseInterceptor from "./interceptors/response-interceptor.js";
 
 const app = express();
 const port = 3000;
@@ -14,8 +14,7 @@ app.use(
   }),
 );
 
-// app.use('/api', router);
-
+app.use(responseInterceptor);
 app.post('/api', requestRouter);
 
 app.use((err, req, res, next) => {
