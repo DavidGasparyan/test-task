@@ -23,18 +23,18 @@ const DESTINATIONS = [
 ];
 
 const checkStrategy = function (strategy, destinationObj) {
-  const deserializedFunction = eval(`(${strategy})`);
-  
-  if (typeof deserializedFunction === 'function') {
-    return deserializedFunction();
-  }
-  
   if (strategy === 'ANY') {
     return Object.values(destinationObj).some(isDestinationPermitted => isDestinationPermitted);
   }
   
   if (strategy === 'ALL') {
     return Object.values(destinationObj).every(isDestinationPermitted => isDestinationPermitted);
+  }
+  
+  const deserializedFunction = eval(`(${strategy})`);
+  
+  if (typeof deserializedFunction === 'function') {
+    return deserializedFunction();
   }
   
   return false;

@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import requestRouter from "./request-router.js";
 import responseInterceptor from "./interceptors/response.interceptor.js";
 import verifyToken from "./middlewre/verify-token.middleware.js";
+import validateRoutingEventRequestBody from "./validators/routing-event.validator.js";
 
 const app = express();
 const port = 3000;
@@ -19,7 +20,7 @@ app.use(
 );
 
 app.use(responseInterceptor);
-app.post('/api', verifyToken, requestRouter);
+app.post('/api', verifyToken, validateRoutingEventRequestBody, requestRouter);
 
 app.post('/login', (req, res) => {
   // In a real-world scenario, you would validate the user's credentials here
