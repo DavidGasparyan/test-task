@@ -1,43 +1,38 @@
 import axios from 'axios';
+import {Destinations} from "./constants/destinations.js";
 
-const DESTINATIONS = [
-  {
-    name: 'destination1',
-    url: 'http://example.com/endpoint',
-    transport: 'http.post'
-  },
-  {
-    name: 'destination2',
-    url: 'http://example2.com/endpoint',
-    transport: 'http.put'
-  },
-  {
-    name: 'destination3',
-    url: 'http://example3.com/endpoint',
-    transport: 'http.get'
-  },
-  {
-    name: 'destination4',
-    transport: 'console.log'
-  }
-];
+const getAllPossibleDestinationsHashTable = function(possibleDestinations) {
+  return Array.from(
+    new Set(possibleDestinations.flatMap(obj => Object.keys(obj)))
+  ).reduce((a, v) => ({ ...a, [v]: false}), {})
+}
 
-const checkStrategy = function (strategy, destinationObj) {
+const filterDestinationsByStrategy = function (strategy, possibleDestinations) {
+  const allDestinationKeys = Array.from(
+    new Set(possibleDestinations.flatMap(obj => Object.keys(obj)))
+  );
+  
   if (strategy === 'ANY') {
-    return Object.values(destinationObj).some(isDestinationPermitted => isDestinationPermitted);
+    return allDestinationKeys.filter(key =>
+      possibleDestinations.some(obj => obj[key] === true)
+    );
   }
   
   if (strategy === 'ALL') {
-    return Object.values(destinationObj).every(isDestinationPermitted => isDestinationPermitted);
+    return allDestinationKeys.filter(key =>
+      possibleDestinations.every(obj => obj[key] === true || obj[key] === undefined)
+    );
   }
-  
+
   const deserializedFunction = eval(`(${strategy})`);
-  
+
   if (typeof deserializedFunction === 'function') {
-    return deserializedFunction();
+    return allDestinationKeys.filter(key =>
+      possibleDestinations.every(deserializedFunction)
+    );
   }
   
-  return false;
+  return allDestinationKeys;
 }
 
 const getRequestByHttpMethod = function(method, url, payload) {
@@ -81,37 +76,29 @@ const routeRequestsToDestinations = async function({ possibleDestinations, paylo
     console: {},
   };
   
-  const allDestinations = {
+  const allDestinations = getAllPossibleDestinationsHashTable(possibleDestinations);
   
-  };
+  const filteredDestinations = filterDestinationsByStrategy(strategy, possibleDestinations);
   
-  possibleDestinations.forEach((destinationObj) => {
-      const isRoutingToDestinationPermitted = checkStrategy(strategy, destinationObj)
-      
-      for (const destination in destinationObj) {
-        allDestinations[destination] = false;
-        
-        if (isRoutingToDestinationPermitted) {
-          const destinationConfig = DESTINATIONS.find(dest => dest.name === destination);
-          
-          if (destinationConfig) {
-            const { protocol, method } = filterRequestsByRequestProtocol(destinationConfig, payload);
-            requests[protocol][destination] = method;
-          } else {
-            console.error('UnknownDestinationError', destination);
-          }
-        }
-      }
-    });
+  filteredDestinations.forEach((destination) => {
+    const destinationConfig = Destinations.find(dest => dest.name === destination);
+    
+    if (destinationConfig) {
+      const { protocol, method } = filterRequestsByRequestProtocol(destinationConfig, payload);
+      requests[protocol][destination] = method;
+    } else {
+      console.error('UnknownDestinationError', destination);
+    }
+  });
   
   const httpRequests = Object.values(requests['http']);
-  
+
   await Promise.allSettled(httpRequests);
-  
+
   for (let fn in requests['console']) {
     requests['console'][fn]();
   }
-  
+
   return {
     ...allDestinations,
     ...(Object.keys(requests['http']).reduce((a, v) => ({ ...a, [v]: true}), {})),
